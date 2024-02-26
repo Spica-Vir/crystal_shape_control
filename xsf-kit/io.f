@@ -5,7 +5,7 @@
 !       NATM     : Maximum number of atoms
 !       NGDX/Y/Z : Actual rid points along x/y/z
 !       NAT      : Actual number of atoms
-        integer,parameter :: NGDM = 1000
+        integer,parameter :: NGDM = 2000
         integer,parameter :: NATM = 1000
         integer           :: NGDX,NGDY,NGDZ,NAT,NGD,NGDAVG
 
@@ -59,12 +59,12 @@
 
 !         Read box where 3D data is defined
           read(10,'(A)',err=1000,end=1000) HEADER
-          do while(index(HEADER,'BEGIN_DATAGRID_3D') == 0)
+          do while(index(HEADER,'DATAGRID_3D_UNKNOWN') == 0)
             read(10,'(A)',err=1000,end=1000) HEADER
-          enddo
+          end do
 
 !         Read 3D grid data
-          read(10,'(3I13)',err=1000,end=1000) NGDX,NGDY,NGDZ
+          read(10,'(3I12)',err=1000,end=1000) NGDX,NGDY,NGDZ
           NGD = NGDX * NGDY * NGDZ
           if (NGDX > NGDM .or. NGDY > NGDM .or. NGDZ > NGDM) then
             print*,'Grid too large. Maximum grid numbers along X/Y/Z: ',

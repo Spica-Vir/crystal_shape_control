@@ -1,17 +1,15 @@
       program opt3dxsf
 !     Process 3D real space grid data in XCrySDen XSF format for various
 !     applications. Including:
-!     1. Difference among various sets of data, such as differential 
+!     1. Difference among various sets of data, such as differential
 !     charge density
 !     2. Planar-averaged 1D profile projected along a given lattice
 !     vector (a,b,c), such as planar-averaged electrostatic potential
+!     3. 3D grid data processing, including normalizing integrated value
+!     or value on grid points
 !
-!     Note that by default, lengths are reported in Bohr, unless
-!     required by specific data formats. For charge and electrostatic
-!     potential units, outputs are consistent with input data, i.e., if
-!     the charge density input is in e.Bohr^-3, the 1D line profile is
-!     in e.Bohr^-1.
-!     
+!     Note that by default, units reported are consistent with raw data.
+!
 !      To launch the executable, the user can either:
 !      1. Copy the binary executable into work directory
 !      2. Specify the full path of input data
@@ -22,7 +20,9 @@
 !     ------------------------------------------------------------------
 !     Revised for XCrySDen by Spica.Vir, ICL, 26th Mar., 2023
 !     ------------------------------------------------------------------
-!     Revised for data normalization by Spica.Vir, ICL, 2nd Feb., 2024
+!     Revised for integrated value by Spica.Vir, ICL, 2nd Feb., 2024
+!     ------------------------------------------------------------------
+!     Revised for grid point value by Spica.Vir, ICL, 26th Feb., 2024
 !     ------------------------------------------------------------------
         use option
 
@@ -32,7 +32,7 @@
         print*,'1. Planar-averaged line profile of 3D XSF data.'
         print*,'2. 3D XSF data differences of multiple files.'
         print*,'3. 3D data difference + line profile.'
-        print*,'4. Normalize the integrated grid value.'
+        print*,'4. 3D data normalization.'
         print*,'Please enter your option: '
         read*,OPTNUM
 

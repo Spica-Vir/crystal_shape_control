@@ -70,7 +70,7 @@
           endif
           print*,'Planar averaged data calculated along ', AVGVEC
         end subroutine planar_avg
-        
+
         subroutine shift_origin(LATT,ATCOORD,AVGVEC,SHIFT,DIST,AVG1D)
 !         Shift origin of slab along the averaged direction
 !         SHIFT : Shifting length. In Angstrom
@@ -104,7 +104,7 @@
               FRACMX = FRAC
             endif
           enddo
-          
+
           FRACMID = (FRACMX + FRACMI) / 2
           DISP = -LENVEC * FRACMID
           NPT = size(DIST)
