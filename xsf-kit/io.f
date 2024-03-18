@@ -100,11 +100,12 @@
           open(20,file=TXTOUT)
           write(20,200) 'N Points',NGDAVG,
      &                  'Step in Bohr',DIST(2) - DIST(1),
-     &                  'Cross section area(Bohr**2)',AREA
-200       format(A15,I4,4X,A15,F15.6,4X,A30,E15.9)
-          write(20,'(A16,4X,A16,4x,A16)') 'x(Bohr)','y(Bohr**-3)'
-          write(20,'(F16.8,4X,F16.8,4x,F16.8)') 
-     &         (DIST(I),AVG1D(I),I=1,NGDAVG)
+     &                  'Crosssectional area(Bohr^2)',AREA
+200       format(A15,I4,4X,A15,F15.6,4X,A30,4X,E15.9)
+          write(20,'(A16,4X,A16,4X,A16)') 'x(Bohr)','y(Bohr^-3)',
+     &                                    'y(Bohr^-1)'
+          write(20,'(F16.8,4X,E16.8,4X,E16.8)') 
+     &         (DIST(I),AVG1D(I),AVG1D(I)*AREA,I=1,NGDAVG)
           write(20,'(/)')
 
           close(20)
