@@ -3,7 +3,7 @@
         private
 !       A2BR : Conversion rate from Angstrom to Bohr
 !       NGDM : The maximum number of grid points along X/Y/Z
-        real,parameter    :: A2BR = 1.889726128
+!        real,parameter    :: A2BR = 1.889726128 disabled
         integer,parameter :: NGDM = 1000
 
         public  :: planar_avg,shift_origin
@@ -13,7 +13,7 @@
         subroutine planar_avg(ORG,BOX,GRID,AVGVEC,AREA,DIST,AVG1D,INT1D)
 !         Calculate the planar averaged data along the given direction
 !         AVGVEC  : 1,2,3, lattice vectors along which the planar averaged data is computed
-!         DIST    : NGDAVG * 1 Plane distances, in Bohr
+!         DIST    : NGDAVG * 1 Plane distances, in Å
 !         AVG1D   : NGDAVG * 1 Planar averaged data, surface area normalized to 1
 !         INT1D   : NGDAVG * 1 Integrated 1D profile, surface area normalized to 1
           real,dimension(3),intent(in)     :: ORG
@@ -34,13 +34,13 @@
 
           TDIST = (BOX(1,AVGVEC)**2
      &           + BOX(2,AVGVEC)**2
-     &           + BOX(3,AVGVEC)**2)**0.5 * A2BR
+     &           + BOX(3,AVGVEC)**2)**0.5
           DDIST = TDIST / NGDAVG
 
           allocate(DIST(NGDAVG),AVG1D(NGDAVG),INT1D(NGDAVG))
           do I = 1,NGDAVG
 ! Data point at the middle of a slice
-            DIST(I) = DDIST * (I - 0.5) + ORG(NGDAVG) * A2BR
+            DIST(I) = DDIST * (I - 0.5) + ORG(NGDAVG)
 ! Initialize AVG1D
             AVG1D(I) = 0.
           enddo
@@ -74,7 +74,7 @@
 
 ! Get integration
           INT1D = line_integ(AVG1D)
-          print*,'Integration calculated along ', AVGVEC
+          print*,'Integration calculated along          ', AVGVEC
         end subroutine planar_avg
 
         subroutine shift_origin
@@ -94,14 +94,14 @@
 
           NATOM = size(ATCOORD,dim=2)
           do I = 1,3
-            VEC(I) = LATT(I,AVGVEC) * A2BR
+            VEC(I) = LATT(I,AVGVEC)
             LENVEC = LENVEC + VEC(I)**2
           enddo
           LENVEC = LENVEC**0.5
           do I = 1,NATOM
             DTPDT = 0.
             do J = 1,3
-              DTPDT = DTPDT + VEC(J) / LENVEC * ATCOORD(J,I) * A2BR
+              DTPDT = DTPDT + VEC(J) / LENVEC * ATCOORD(J,I)
             enddo
             FRAC = DTPDT / LENVEC
             if (FRAC < FRACMI) then
@@ -124,7 +124,7 @@
             else
               DIST(I) = DIST(I) + DISP
             endif
-            DIST(I) = DIST(I) + SHIFT * A2BR
+            DIST(I) = DIST(I) + SHIFT
           enddo
 !         Sort DIST,AVG1D,INT1D
           do I = 1,NPT-1
@@ -146,7 +146,7 @@
 
         function plane_area(BOX,AVGVEC) result(AREA)
 !         Calculate the area of the lattice plane defined by 2 base vectors other than AVGVEC
-!         AREA : Area of the plane, in Bohr^2
+!         AREA : Area of the plane, in Å^2
           real,dimension(3,3),intent(in) :: BOX
           integer,intent(in)             :: AVGVEC
           real,dimension(3)              :: CROSP
@@ -174,7 +174,7 @@
           CROSP(3)
      &      = BOX(1,PVEC1) * BOX(2,PVEC2) - BOX(2,PVEC1) * BOX(1,PVEC2)
           AREA
-     &      = (CROSP(1)**2 + CROSP(2)**2 + CROSP(3)**2)**0.5 * A2BR**2
+     &      = (CROSP(1)**2 + CROSP(2)**2 + CROSP(3)**2)**0.5
 
           return
         end function plane_area

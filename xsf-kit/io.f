@@ -84,32 +84,33 @@
 1000      print*,'Error opening or reading the 3D XSF file ',XSF;stop
         end subroutine read_3dxsf
 !----
-        subroutine write_1dtxt(TXTOUT,AREA,DIST,AVG1D,INT1D)
+        subroutine write_1dtxt(TXTOUT,AREA,SHIFT,DIST,AVG1D,INT1D)
 !         Write 1D planar-averaged data into a txt file
 !         TXTOUT  : Output file name
-!         DIST    : Displacement (x axis), in Bohr
+!         AREA    : Cross-sectional area of averaged plane
+!         SHIFT   : SHIFT of origin in Angstrom
+!         DIST    : Displacement (x axis), in Å
 !         AVG1D   : Averaged data (y axis). Cross section area normalized to 1
 !         INT1D   : Integrated data (y axis). Cross section area normalized to 1
           character(len=80),intent(in) :: TXTOUT
-          real,intent(in)              :: AREA
+          real,intent(in)              :: AREA,SHIFT
           real,dimension(:),intent(in) :: DIST,AVG1D,INT1D
           integer                      :: I
 
           NGDAVG = size(DIST)
 
           open(20,file=TXTOUT)
-          write(20,200) 'N Points',NGDAVG,
-     &                  'Step in Bohr',DIST(2) - DIST(1),
-     &                  'Crosssectional area(Bohr^2)',AREA
-          write(20,201) 'x(Bohr)','yAVG(Bohr^-3)','yAVG(Bohr^-1)',
-     &                  'yINT(Bohr^-3)','yINT(Bohr^-1)'
+          write(20,200) 'N Points',NGDAVG,'Step in Å',DIST(2)-DIST(1),
+     &                  'Cross-sectional area (Å^2)',AREA,
+     &                  'Shift of origin (Å)',SHIFT
+          write(20,201) 'x(Å)','yAVG','yINT'
           do I=1,NGDAVG
-            write(20,202) DIST(I),AVG1D(I),AVG1D(I)*AREA,
-     &                    INT1D(I),INT1D(I)*AREA
+            write(20,202) DIST(I),AVG1D(I),INT1D(I)
           end do
-200       format(A15,I4,4X,A15,F15.6,4X,A30,4X,E15.9)
-201       format(A16,4X,A16,4X,A16,4X,A16,4X,A16)
-202       format(F16.8,4X,E16.8,4X,E16.8,4X,E16.8,4X,E16.8)
+200       format(A10,2X,I4,2X,A10,2X,F12.6,2X,A30,2X,F12.6,2X,A20,
+     &           2X,F12.6)
+201       format(A16,4X,A16,4X,A16)
+202       format(F16.8,4X,E16.8,4X,E16.8)
           write(20,'(/)')
 
           close(20)

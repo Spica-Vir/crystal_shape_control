@@ -33,6 +33,11 @@
         integer           :: OPTNUM
         character(len=80) :: INPUT,OUTPUT,OUTPUT2
 
+        print*,'======================================================='
+        print*,'                 XSF-KIT BY SPICA.VIR'
+        print*,'NOTE: Geometry unit: Å'
+        print*,'      Data grid unit: Commmensurate with input'
+        print*,'======================================================='
         print*,
      &    '1. Planar-averaged line profile and integration ',
      &    'of 3D XSF data.'

@@ -24,9 +24,9 @@
           real,dimension(:,:,:),allocatable    :: GRID
           real,dimension(:),allocatable        :: DIST,AVG1D,INT1D
 
-          print*,'Please specify the direction of 1D line profile: ',
-     &      '(1-3 only. 1=Lattice vector 1, 2=Lattice vector 2, ',
-     &      '3=Lattice vector 3)'
+          print*,'Please specify the direction of 1D line profile: '
+          print*,'  (1-3 only. 1=Lattice vector 1, 2=Lattice vector 2,
+     &3=Lattice vector 3)'
           read*,AVGVEC
 
           if (AVGVEC /= 1 .and. AVGVEC /= 2 .and. AVGVEC /= 3) then
@@ -34,11 +34,13 @@
             stop
           endif
 
-          print*,'Please specify the shift along the averaged direction:
-     & (Unit: Angstrom): ',"Use 'no' for no shift."
+          print*,'Please specify the shift along the averaged direction
+     &(Unit: Å): '
+          print*,"  Use 'no' for no shift."
           read*,SHIFTC
           if (SHIFTC == 'no') then
             DOSHIFT = .false.
+            SHIFT= 0.0
           else
             DOSHIFT = .true.
             read(SHIFTC,'(f10.6)') SHIFT
@@ -50,7 +52,7 @@
             call
      &        shift_origin(LATT,ATCOORD,AVGVEC,SHIFT,DIST,AVG1D,INT1D)
           endif
-          call write_1dtxt(OUTPUT,AREA,DIST,AVG1D,INT1D)
+          call write_1dtxt(OUTPUT,AREA,SHIFT,DIST,AVG1D,INT1D)
         end subroutine option1
 !----
         subroutine option2(INPUT0,OUTPUT)
