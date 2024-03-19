@@ -22,7 +22,7 @@
           real,dimension(:,:),allocatable      :: ATCOORD
           real,dimension(3)                    :: ORG
           real,dimension(:,:,:),allocatable    :: GRID
-          real,dimension(:),allocatable        :: DIST,AVG1D
+          real,dimension(:),allocatable        :: DIST,AVG1D,INT1D
 
           print*,'Please specify the direction of 1D line profile: ',
      &      '(1-3 only. 1=Lattice vector 1, 2=Lattice vector 2, ',
@@ -45,11 +45,12 @@
           endif
 
           call read_3dxsf(INPUT,LATT,ATLABEL,ATCOORD,ORG,BOX,GRID)
-          call planar_avg(ORG,BOX,GRID,AVGVEC,AREA,DIST,AVG1D)
+          call planar_avg(ORG,BOX,GRID,AVGVEC,AREA,DIST,AVG1D,INT1D)
           if (DOSHIFT) then
-            call shift_origin(LATT,ATCOORD,AVGVEC,SHIFT,DIST,AVG1D)
+            call
+     &        shift_origin(LATT,ATCOORD,AVGVEC,SHIFT,DIST,AVG1D,INT1D)
           endif
-          call write_1dtxt(OUTPUT,AREA,DIST,AVG1D)
+          call write_1dtxt(OUTPUT,AREA,DIST,AVG1D,INT1D)
         end subroutine option1
 !----
         subroutine option2(INPUT0,OUTPUT)

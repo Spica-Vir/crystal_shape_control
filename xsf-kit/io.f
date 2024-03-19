@@ -37,22 +37,21 @@
             read(10,'(A)',err=1000,end=1000) HEADER
           enddo
 !         Read lattice matrix
-          read(10,'(3F15.9)',err=1000,end=1000)
-     &      ((LATT(I,J),I=1,3),J=1,3)
+          read(10,*,err=1000,end=1000) ((LATT(I,J),I=1,3),J=1,3)
 
 !         Read atomic species and coords
           read(10,'(A)',err=1000,end=1000) HEADER
           do while(index(HEADER,'PRIMCOORD') == 0)
             read(10,'(A)',err=1000,end=1000) HEADER
           enddo
-          read(10,'(2I13)',err=1000,end=1000) NAT,I
+          read(10,*,err=1000,end=1000) NAT,I
           if (NAT > NATM) then
             print*,'Too many atoms. Maximum atoms allowed: ',NATM,
      &        '. Exiting'
             stop
           endif
           allocate(ATLABEL(NAT),ATCOORD(3,NAT))
-          read(10,'(A2,4X,3F15.9)',err=1000,end=1000) (ATLABEL(I),
+          read(10,*,err=1000,end=1000) (ATLABEL(I),
      &      ATCOORD(1,I),ATCOORD(2,I),ATCOORD(3,I),I=1,NAT)
 
           print*,'3D geometry data read'
@@ -64,17 +63,17 @@
           end do
 
 !         Read 3D grid data
-          read(10,'(3I12)',err=1000,end=1000) NGDX,NGDY,NGDZ
+          read(10,*,err=1000,end=1000) NGDX,NGDY,NGDZ
           NGD = NGDX * NGDY * NGDZ
           if (NGDX > NGDM .or. NGDY > NGDM .or. NGDZ > NGDM) then
             print*,'Grid too large. Maximum grid numbers along X/Y/Z: ',
      &        NGDM,'. Exiting.'
             stop
           endif
-          read(10,'(3F10.6)',err=1000,end=1000) (ORG(I),I=1,3)
-          read(10,'(3F12.6)',err=1000,end=1000) ((BOX(I,J),I=1,3),J=1,3)
+          read(10,*,err=1000,end=1000) (ORG(I),I=1,3)
+          read(10,*,err=1000,end=1000) ((BOX(I,J),I=1,3),J=1,3)
           allocate(GRID(NGDX,NGDY,NGDZ))
-          read(10,'(6E14.6)',err=1000,end=1001)
+          read(10,*,err=1000,end=1001)
      &      (((GRID(I,J,K),I=1,NGDX),J=1,NGDY),K=1,NGDZ)
           print*,'3D grid data read'
           close(10)
@@ -85,14 +84,15 @@
 1000      print*,'Error opening or reading the 3D XSF file ',XSF;stop
         end subroutine read_3dxsf
 !----
-        subroutine write_1dtxt(TXTOUT,AREA,DIST,AVG1D)
+        subroutine write_1dtxt(TXTOUT,AREA,DIST,AVG1D,INT1D)
 !         Write 1D planar-averaged data into a txt file
 !         TXTOUT  : Output file name
 !         DIST    : Displacement (x axis), in Bohr
 !         AVG1D   : Averaged data (y axis). Cross section area normalized to 1
+!         INT1D   : Integrated data (y axis). Cross section area normalized to 1
           character(len=80),intent(in) :: TXTOUT
           real,intent(in)              :: AREA
-          real,dimension(:),intent(in) :: DIST,AVG1D
+          real,dimension(:),intent(in) :: DIST,AVG1D,INT1D
           integer                      :: I
 
           NGDAVG = size(DIST)
@@ -101,11 +101,15 @@
           write(20,200) 'N Points',NGDAVG,
      &                  'Step in Bohr',DIST(2) - DIST(1),
      &                  'Crosssectional area(Bohr^2)',AREA
+          write(20,201) 'x(Bohr)','yAVG(Bohr^-3)','yAVG(Bohr^-1)',
+     &                  'yINT(Bohr^-3)','yINT(Bohr^-1)'
+          do I=1,NGDAVG
+            write(20,202) DIST(I),AVG1D(I),AVG1D(I)*AREA,
+     &                    INT1D(I),INT1D(I)*AREA
+          end do
 200       format(A15,I4,4X,A15,F15.6,4X,A30,4X,E15.9)
-          write(20,'(A16,4X,A16,4X,A16)') 'x(Bohr)','y(Bohr^-3)',
-     &                                    'y(Bohr^-1)'
-          write(20,'(F16.8,4X,E16.8,4X,E16.8)') 
-     &         (DIST(I),AVG1D(I),AVG1D(I)*AREA,I=1,NGDAVG)
+201       format(A16,4X,A16,4X,A16,4X,A16,4X,A16)
+202       format(F16.8,4X,E16.8,4X,E16.8,4X,E16.8,4X,E16.8)
           write(20,'(/)')
 
           close(20)
@@ -147,7 +151,7 @@
             do J = 1,NGDY
               do I = 1,NGDX
                 NGD = NGD + 1
-                if (mod(NGD,6) == 0) then
+                if (mod(NGD,5) == 0) then
                   write(21,'(E14.6)') GRID(I,J,K)
                 else
                   write(21,'(E14.6,$)') GRID(I,J,K)

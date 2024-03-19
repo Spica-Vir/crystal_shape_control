@@ -13,25 +13,31 @@
 !      To launch the executable, the user can either:
 !      1. Copy the binary executable into work directory
 !      2. Specify the full path of input data
+!
+!     By Spica.Vir
 !     ------------------------------------------------------------------
-!     Originally edited for VASP5 by Spica.Vir, NWPU. 5th Apr., 2020
+!     Originally edited for VASP5, @NWPU. 5th Apr., 2020
 !     ------------------------------------------------------------------
-!     Revised for VASP5 by Spica.Vir, ICL. 25th Mar.; 14th May., 2021
+!     Revised for VASP5, @ICL. 25th Mar.; 14th May., 2021
 !     ------------------------------------------------------------------
-!     Revised for XCrySDen by Spica.Vir, ICL, 26th Mar., 2023
+!     Revised for XCrySDen, @ICL. 26th Mar., 2023
 !     ------------------------------------------------------------------
-!     Revised for integrated value by Spica.Vir, ICL, 2nd Feb., 2024
+!     Revised for normalization (integration), @ICL, 2nd Feb., 2024
 !     ------------------------------------------------------------------
-!     Revised for grid point value by Spica.Vir, ICL, 26th Feb., 2024
+!     Revised for normalization (division), @ICL, 26th Feb., 2024
+!     ------------------------------------------------------------------
+!     Revised for line integration, @ICL, 19th Mar., 2024
 !     ------------------------------------------------------------------
         use option
 
         integer           :: OPTNUM
         character(len=80) :: INPUT,OUTPUT,OUTPUT2
 
-        print*,'1. Planar-averaged line profile of 3D XSF data.'
+        print*,
+     &    '1. Planar-averaged line profile and integration ',
+     &    'of 3D XSF data.'
         print*,'2. 3D XSF data differences of multiple files.'
-        print*,'3. 3D data difference + line profile.'
+        print*,'3. 3D data difference + line profile and integration.'
         print*,'4. 3D data normalization.'
         print*,'Please enter your option: '
         read*,OPTNUM
