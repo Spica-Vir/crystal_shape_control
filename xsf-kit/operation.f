@@ -10,16 +10,21 @@
         private :: plane_area,line_integ
 
         contains
-        subroutine planar_avg(ORG,BOX,GRID,AVGVEC,AREA,DIST,AVG1D,INT1D)
+        subroutine planar_avg(LATT,ATCOORD,ORG,BOX,GRID,AVGVEC,SHIFT,
+     &                        AREA,DIST,AVG1D,INT1D)
 !         Calculate the planar averaged data along the given direction
 !         AVGVEC  : 1,2,3, lattice vectors along which the planar averaged data is computed
+!         SHIFT   : float Length of shift of origin, in Å
+!         AREA    : float Cross-sectional area of averaged plane, in Å^2
 !         DIST    : NGDAVG * 1 Plane distances, in Å
 !         AVG1D   : NGDAVG * 1 Planar averaged data, surface area normalized to 1
 !         INT1D   : NGDAVG * 1 Integrated 1D profile, surface area normalized to 1
+          real,dimension(:,:),intent(in)   :: ATCOORD
           real,dimension(3),intent(in)     :: ORG
-          real,dimension(3,3),intent(in)   :: BOX
+          real,dimension(3,3),intent(in)   :: LATT,BOX
           real,dimension(:,:,:),intent(in) :: GRID
           integer,intent(in)               :: AVGVEC
+          real,intent(in)                  :: SHIFT
           integer                          :: NGDAVG,NGDX,NGDY,NGDZ
           integer                          :: I,J,K
           real                             :: TDIST,DDIST
@@ -70,6 +75,8 @@
               end do
             end do
           end if
+
+          call shift_origin (LATT,ATCOORD,AVGVEC,SHIFT,DIST,AVG1D)
           print*,'Planar averaged data calculated along ', AVGVEC
 
 ! Get integration
@@ -77,8 +84,7 @@
           print*,'Integration calculated along          ', AVGVEC
         end subroutine planar_avg
 
-        subroutine shift_origin
-     &    (LATT,ATCOORD,AVGVEC,SHIFT,DIST,AVG1D,INT1D)
+        subroutine shift_origin (LATT,ATCOORD,AVGVEC,SHIFT,DIST,AVG1D)
 !         Shift origin of slab along the averaged direction
 !         SHIFT : Shifting length. In Angstrom
           real,dimension(3,3),intent(in)  :: LATT
@@ -90,13 +96,13 @@
      &                                       FRACMID,LENVEC=0.,DTPDT,
      &                                       DISP,TMP
           real,dimension(3)               :: VEC
-          real,dimension(:),intent(inout) :: DIST,AVG1D,INT1D
-
+          real,dimension(:),intent(inout) :: DIST,AVG1D
+!         Shift geometry
           NATOM = size(ATCOORD,dim=2)
           do I = 1,3
             VEC(I) = LATT(I,AVGVEC)
             LENVEC = LENVEC + VEC(I)**2
-          enddo
+          end do
           LENVEC = LENVEC**0.5
           do I = 1,NATOM
             DTPDT = 0.
@@ -110,8 +116,8 @@
             if (FRAC > FRACMX) then
               FRACMX = FRAC
             endif
-          enddo
-
+          end do
+!         Shift data grid
           FRACMID = (FRACMX + FRACMI) / 2
           DISP = -LENVEC * FRACMID
           NPT = size(DIST)
@@ -125,8 +131,8 @@
               DIST(I) = DIST(I) + DISP
             endif
             DIST(I) = DIST(I) + SHIFT
-          enddo
-!         Sort DIST,AVG1D,INT1D
+          end do
+!         Sort DIST,AVG1D
           do I = 1,NPT-1
             do J = I+1,NPT
               if (DIST(I) > DIST(J)) then
@@ -136,12 +142,9 @@
                 TMP = AVG1D(I)
                 AVG1D(I) = AVG1D(J)
                 AVG1D(J) = TMP
-                TMP = INT1D(I)
-                INT1D(I) = INT1D(J)
-                INT1D(J) = TMP
               endif
-            enddo
-          enddo
+            end do
+          end do
         end subroutine
 
         function plane_area(BOX,AVGVEC) result(AREA)

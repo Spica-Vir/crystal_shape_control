@@ -16,7 +16,6 @@
           integer                              :: AVGVEC
           character(len=10)                    :: SHIFTC
           real                                 :: SHIFT=0.0,AREA
-          logical                              :: DOSHIFT
           real,dimension(3,3)                  :: LATT,BOX
           character*2,dimension(:),allocatable :: ATLABEL
           real,dimension(:,:),allocatable      :: ATCOORD
@@ -39,19 +38,14 @@
           print*,"  Use 'no' for no shift."
           read*,SHIFTC
           if (SHIFTC == 'no') then
-            DOSHIFT = .false.
             SHIFT= 0.0
           else
-            DOSHIFT = .true.
             read(SHIFTC,'(f10.6)') SHIFT
           endif
 
           call read_3dxsf(INPUT,LATT,ATLABEL,ATCOORD,ORG,BOX,GRID)
-          call planar_avg(ORG,BOX,GRID,AVGVEC,AREA,DIST,AVG1D,INT1D)
-          if (DOSHIFT) then
-            call
-     &        shift_origin(LATT,ATCOORD,AVGVEC,SHIFT,DIST,AVG1D,INT1D)
-          endif
+          call planar_avg(LATT,ATCOORD,ORG,BOX,GRID,AVGVEC,SHIFT,
+     &                    AREA,DIST,AVG1D,INT1D)
           call write_1dtxt(OUTPUT,AREA,SHIFT,DIST,AVG1D,INT1D)
         end subroutine option1
 !----
