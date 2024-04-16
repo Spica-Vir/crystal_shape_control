@@ -7,6 +7,8 @@
 !     vector (a,b,c), such as planar-averaged electrostatic potential
 !     3. 3D grid data processing, including normalizing integrated value
 !     or value on grid points
+!     4. Data analysis, namely plot data set A as x axis and B as y for
+!     their correlations
 !
 !     Note that by default, units reported are consistent with raw data.
 !
@@ -22,16 +24,16 @@
 !     ------------------------------------------------------------------
 !     Revised for XCrySDen, @ICL. 26th Mar., 2023
 !     ------------------------------------------------------------------
-!     Revised for normalization (integration), @ICL, 2nd Feb., 2024
-!     ------------------------------------------------------------------
-!     Revised for normalization (division), @ICL, 26th Feb., 2024
+!     Revised for normalization, @ICL, 26th Feb., 2024
 !     ------------------------------------------------------------------
 !     Revised for line integration, @ICL, 19th Mar., 2024
+!     ------------------------------------------------------------------
+!     Revised for RDG/NCI analysis, @ICL, 16th Apr., 2024
 !     ------------------------------------------------------------------
         use option
 
         integer           :: OPTNUM
-        character(len=80) :: INPUT,OUTPUT,OUTPUT2
+        character(len=80) :: INPUT,INPUT2,OUTPUT,OUTPUT2
 
         print*,'======================================================='
         print*,'                 XSF-KIT BY SPICA.VIR'
@@ -44,6 +46,7 @@
         print*,'2. 3D XSF data differences of multiple files.'
         print*,'3. 3D data difference + line profile and integration.'
         print*,'4. 3D data normalization.'
+        print*,'5. Correlation between 2 3D grid data.'
         print*,'Please enter your option: '
         read*,OPTNUM
 
@@ -73,6 +76,16 @@
           print*,'Please specify the name of 3D XSF output: '
           read*,OUTPUT
           call option4(INPUT,OUTPUT)
+        else if (OPTNUM == 5) then
+          print*,'NOTE: This module analysis correlation of 2 xsf data.'
+          print*,'      A txt file for scatter plotting is generated.'
+          print*,'Please specify the 3D XSF input as x axis:'
+          read*,INPUT
+          print*,'Please specify the 3D XSF input as y axis:'
+          read*,INPUT2
+          print*,'Please specify the 2D plot file name:'
+          read*,OUTPUT
+          call option5(INPUT,INPUT2,OUTPUT)
         else
           print*,'Error: Option not supported. Exiting.'
           stop

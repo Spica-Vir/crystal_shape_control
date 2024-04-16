@@ -4,7 +4,7 @@
         integer,parameter :: NGDM = 1000
         integer,parameter :: NATM = 1000
 
-        public :: option1,option2,option3,option4
+        public :: option1,option2,option3,option4,option5
 
         contains
         subroutine option1(INPUT,OUTPUT)
@@ -157,4 +157,34 @@
           endif
           call write_3dxsf(OUTPUT,LATT,ATLABEL,ATCOORD,ORG,BOX,GRID)
         end subroutine option4
+!----
+        subroutine option5(INPUT1,INPUT2,OUTPUT)
+!----     Get correlation of 2 3D xsf data
+          use io
+
+          character(len=80),intent(in)         :: INPUT1,INPUT2,OUTPUT
+          real,dimension(3,3)                  :: LATT,BOX
+          character*2,dimension(:),allocatable :: ATLABEL
+          real,dimension(:,:),allocatable      :: ATCOORD
+          real,dimension(3)                    :: ORG
+          real,dimension(:,:,:),allocatable    :: GRID1,GRID2
+          integer                              ::
+     &      NGDX1,NGDY1,NGDZ1,NGDX2,NGDY2,NGDZ2,I,J,K
+
+          ! Read and compare dimensions of grid data
+          call read_3dxsf(INPUT1,LATT,ATLABEL,ATCOORD,ORG,BOX,GRID1)
+          NGDX1 = size(GRID1,dim=1)
+          NGDY1 = size(GRID1,dim=2)
+          NGDZ1 = size(GRID1,dim=3)
+          call read_3dxsf(INPUT2,LATT,ATLABEL,ATCOORD,ORG,BOX,GRID2)
+          NGDX2 = size(GRID2,dim=1)
+          NGDY2 = size(GRID2,dim=2)
+          NGDZ2 = size(GRID2,dim=3)
+          if (NGDX1/=NGDX2 .or. NGDY1/=NGDY2 .or. NGDZ1/=NGDZ2) then
+            print*,'ERROR: Inconsistent grid detected.'
+            stop
+          end if
+          ! write file
+          call write_scatter(OUTPUT,INPUT1,GRID1,INPUT2,GRID2)
+        end subroutine option5
       end module option

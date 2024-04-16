@@ -9,7 +9,7 @@
         integer,parameter :: NATM = 1000
         integer           :: NGDX,NGDY,NGDZ,NAT,NGD,NGDAVG
 
-        public :: read_3dxsf,write_1dtxt,write_3dxsf
+        public :: read_3dxsf,write_1dtxt,write_3dxsf,write_scatter
 !    &    ,NGDX,NGDY,NGDZ,NAT,NGDAVG
 
         contains
@@ -157,12 +157,39 @@
                 else
                   write(21,'(E14.6,$)') GRID(I,J,K)
                 endif
-              enddo
-            enddo
-          enddo
+              end do
+            end do
+          end do
           write(21,'(A)') 'END_DATAGRID_3D'
           write(21,'(A,/,/)') 'END_BLOCK_DATAGRID_3D'
 
           close(21)
         end subroutine write_3dxsf
+!----
+        subroutine write_scatter(SCTOUT,INPUT1,GRID1,INPUT2,GRID2)
+!         Write scatter data of grid data correlation into a 1D txt file
+!         SCTOUT : Output file name
+          character(len=80),intent(in)     :: SCTOUT,INPUT1,INPUT2
+          real,dimension(:,:,:),intent(in) :: GRID1,GRID2
+          integer                          :: I,J,K,NGDX,NGDY,NGDZ
+
+          NGDX = size(GRID1,dim=1)
+          NGDY = size(GRID1,dim=2)
+          NGDZ = size(GRID1,dim=3)
+
+          open(22,file=SCTOUT)
+          write(22,203) '# x axis:       ',INPUT1
+          write(22,203) '# y axis:       ',INPUT2
+          write(22,203) '# x value       ','y value'
+          do K = 1,NGDZ
+            do J = 1,NGDY
+              do I = 1,NGDX
+                write(22,204) GRID1(I,J,K),GRID2(I,J,K)
+              end do
+            end do
+          end do
+          close(22)
+203       format(A16,4X,A)
+204       format(E16.8,4X,E16.8)
+        end subroutine write_scatter
       end module io
