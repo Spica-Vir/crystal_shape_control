@@ -6,7 +6,7 @@
 !        real,parameter    :: A2BR = 1.889726128 disabled
         integer,parameter :: NGDM = 1000
 
-        public  :: planar_avg,shift_origin
+        public  :: planar_avg,shift_1dplot
         private :: plane_area,line_integ
 
         contains
@@ -27,7 +27,7 @@
           real,intent(in)                  :: SHIFT
           integer                          :: NGDAVG,NGDX,NGDY,NGDZ
           integer                          :: I,J,K
-          real                             :: TDIST,DDIST
+          real                             :: TDIST,DDIST,ODIST
           real,intent(out)                 :: AREA
           real,dimension(:),allocatable,intent(out) :: DIST,AVG1D,INT1D
 
@@ -37,18 +37,18 @@
           NGDAVG = size(GRID,dim=AVGVEC)
           AREA = plane_area(BOX,AVGVEC)
 
+!         Averaged length, step and origin
           TDIST = (BOX(1,AVGVEC)**2
-     &           + BOX(2,AVGVEC)**2
-     &           + BOX(3,AVGVEC)**2)**0.5
-          DDIST = TDIST / NGDAVG
+     &           + BOX(2,AVGVEC)**2 + BOX(3,AVGVEC)**2)**0.5
+          DDIST = TDIST / (NGDAVG - 1)
+          ODIST = 1 / TDIST * (BOX(1,AVGVEC) * ORG(1)
+     &           + BOX(2,AVGVEC) * ORG(2) + BOX(3,AVGVEC) * ORG(3))
 
           allocate(DIST(NGDAVG),AVG1D(NGDAVG),INT1D(NGDAVG))
           do I = 1,NGDAVG
-! Data point at the middle of a slice
-            DIST(I) = DDIST * (I - 0.5) + ORG(NGDAVG)
-! Initialize AVG1D
-            AVG1D(I) = 0.
-          enddo
+            DIST(I) = DDIST * (I - 1) + ODIST
+            AVG1D(I) = 0. ! must be initialized
+          end do
 
           if (AVGVEC == 1) then
             do I = 1,NGDX
@@ -76,61 +76,43 @@
             end do
           end if
 
-          call shift_origin (LATT,ATCOORD,AVGVEC,SHIFT,DIST,AVG1D)
+          call shift_1dplot (AVGVEC,SHIFT,BOX,DIST,AVG1D)
           print*,'Planar averaged data calculated along ', AVGVEC
 
 ! Get integration
-          INT1D = line_integ(AVG1D)
+          INT1D = line_integ(DDIST,AVG1D)
           print*,'Integration calculated along          ', AVGVEC
         end subroutine planar_avg
 
-        subroutine shift_origin (LATT,ATCOORD,AVGVEC,SHIFT,DIST,AVG1D)
-!         Shift origin of slab along the averaged direction
-!         SHIFT : Shifting length. In Angstrom
-          real,dimension(3,3),intent(in)  :: LATT
-          real,dimension(:,:),intent(in)  :: ATCOORD
+        subroutine shift_1dplot (AVGVEC,SHIFT,BOX,DIST,AVG1D)
+!         Shift 1d plot along the averaged direction
+!         SHIFT : Shifting length. In fractional unit of data grid along averaged direction
+          real,dimension(3,3),intent(in)  :: BOX
           integer,intent(in)              :: AVGVEC
           real,intent(in)                 :: SHIFT
-          integer                         :: NATOM,NPT,I,J
-          real                            :: FRAC,FRACMI=2.,FRACMX=-2.,
-     &                                       FRACMID,LENVEC=0.,DTPDT,
-     &                                       DISP,TMP
+          integer                         :: NPT,I,J
+          real                            :: ODIST,LENVEC,TMP,FRAC
           real,dimension(3)               :: VEC
           real,dimension(:),intent(inout) :: DIST,AVG1D
-!         Shift geometry
-          NATOM = size(ATCOORD,dim=2)
-          do I = 1,3
-            VEC(I) = LATT(I,AVGVEC)
-            LENVEC = LENVEC + VEC(I)**2
-          end do
-          LENVEC = LENVEC**0.5
-          do I = 1,NATOM
-            DTPDT = 0.
-            do J = 1,3
-              DTPDT = DTPDT + VEC(J) / LENVEC * ATCOORD(J,I)
-            enddo
-            FRAC = DTPDT / LENVEC
-            if (FRAC < FRACMI) then
-              FRACMI = FRAC
-            endif
-            if (FRAC > FRACMX) then
-              FRACMX = FRAC
-            endif
-          end do
-!         Shift data grid
-          FRACMID = (FRACMX + FRACMI) / 2
-          DISP = -LENVEC * FRACMID
+
+!         Temporarily remove the origin of DIST
+          ODIST = DIST(1)
           NPT = size(DIST)
           do I = 1,NPT
-            FRAC = DIST(I) / LENVEC - FRACMID
-            if (FRAC > 0.5) then
-              DIST(I) = DIST(I) + DISP - LENVEC
-            else if (FRAC < -0.5) then
-              DIST(I) = DIST(I) + DISP + LENVEC
+            DIST(I) = DIST(I) - ODIST
+          end do
+!         Shift 1D plot, keeping the origin consistent
+          LENVEC = (BOX(1,AVGVEC)**2
+     &            + BOX(2,AVGVEC)**2 + BOX(3,AVGVEC)**2)**0.5
+          do I = 1,NPT
+            FRAC = DIST(I) / LENVEC + SHIFT
+            if (FRAC >= 1) then
+              DIST(I) = (FRAC - 1 - SHIFT) * LENVEC + ODIST
+            else if (FRAC < 0) then
+              DIST(I) = (FRAC + 1 - SHIFT) * LENVEC + ODIST
             else
-              DIST(I) = DIST(I) + DISP
-            endif
-            DIST(I) = DIST(I) + SHIFT
+              DIST(I) = (FRAC - SHIFT) * LENVEC + ODIST
+            end if
           end do
 !         Sort DIST,AVG1D
           do I = 1,NPT-1
@@ -145,7 +127,7 @@
               endif
             end do
           end do
-        end subroutine
+        end subroutine shift_1dplot
 
         function plane_area(BOX,AVGVEC) result(AREA)
 !         Calculate the area of the lattice plane defined by 2 base vectors other than AVGVEC
@@ -182,19 +164,20 @@
           return
         end function plane_area
 
-        function line_integ(AVG1D) result(INT1D)
+        function line_integ(DDIST,AVG1D) result(INT1D)
 !         Integrate the line profile of 1D data
 !         AVG1D : NGDAVG * 1 Planar averaged data, surface area normalized to 1
 !         INT1D : NGDAVG * 1 Integrated 1D profile, surface area normalized to 1
           real,dimension(:),intent(in)              :: AVG1D
+          real,intent(in)                           :: DDIST
           real                                      :: SUMMED=0.
           integer                                   :: NGAVG,I
           real,dimension(:),allocatable             :: INT1D
 
           NGAVG = size(AVG1D)
-          allocate(INT1D(NGAVG))
-          do I = 1,NGAVG
-            SUMMED = SUMMED + AVG1D(I)
+          allocate(INT1D(NGAVG-1))
+          do I = 1,NGAVG-1
+            SUMMED = SUMMED + (AVG1D(I)+AVG1D(I+1))*DDIST/2
             INT1D(I) = SUMMED
           end do
           return

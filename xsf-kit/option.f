@@ -15,7 +15,7 @@
           character(len=80),intent(in)         :: INPUT,OUTPUT
           integer                              :: AVGVEC
           character(len=10)                    :: SHIFTC
-          real                                 :: SHIFT=0.0,AREA
+          real                                 :: SHIFT=0.0,AREA,SHIFTA
           real,dimension(3,3)                  :: LATT,BOX
           character*2,dimension(:),allocatable :: ATLABEL
           real,dimension(:,:),allocatable      :: ATCOORD
@@ -34,7 +34,7 @@
           endif
 
           print*,'Please specify the shift along the averaged direction
-     &(Unit: Å): '
+     &(Unit: fractional unit of data grid): '
           print*,"  Use 'no' for no shift."
           read*,SHIFTC
           if (SHIFTC == 'no') then
@@ -42,11 +42,18 @@
           else
             read(SHIFTC,'(f10.6)') SHIFT
           endif
+          if (SHIFT >= 1 .or. SHIFT <= -1) then
+            print*,'WARNING: SHIFT should between -1 and 1. Integer part
+     & will be removed'
+            SHIFT = SHIFT - int(SHIFT)
+          endif
 
           call read_3dxsf(INPUT,LATT,ATLABEL,ATCOORD,ORG,BOX,GRID)
           call planar_avg(LATT,ATCOORD,ORG,BOX,GRID,AVGVEC,SHIFT,
      &                    AREA,DIST,AVG1D,INT1D)
-          call write_1dtxt(OUTPUT,AREA,SHIFT,DIST,AVG1D,INT1D)
+          SHIFTA = (BOX(1,AVGVEC)**2
+     &            + BOX(2,AVGVEC)**2 + BOX(3,AVGVEC)**2)**0.5 * SHIFT
+          call write_1dtxt(OUTPUT,AREA,SHIFTA,DIST,AVG1D,INT1D)
         end subroutine option1
 !----
         subroutine option2(INPUT0,OUTPUT)
