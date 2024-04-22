@@ -4,10 +4,10 @@
         integer,parameter :: NGDM = 1000
         integer,parameter :: NATM = 1000
 
-        public :: option1,option2,option3,option4,option5
+        public :: optionA1,optionA2,optionB1,optionB2,optionB3,optionB4
 
         contains
-        subroutine option1(INPUT,OUTPUT)
+        subroutine optionA1(INPUT,OUTPUT)
 !         Get planar averaged data for a single XDF file
           use io
           use operation
@@ -54,63 +54,14 @@
           SHIFTA = (BOX(1,AVGVEC)**2
      &            + BOX(2,AVGVEC)**2 + BOX(3,AVGVEC)**2)**0.5 * SHIFT
           call write_1dtxt(OUTPUT,AREA,SHIFTA,DIST,AVG1D,INT1D)
-        end subroutine option1
+          deallocate(ATLABEL,ATCOORD,GRID,DIST,AVG1D,INT1D)
+        end subroutine optionA1
 !----
-        subroutine option2(INPUT0,OUTPUT)
-!         Get difference of 3D data
-          use io
-
-          character(len=80),intent(in) :: INPUT0,OUTPUT
-          character(len=80)   :: INPUT1
-          real,dimension(3,3) :: LATT0,LATT1,BOX0,BOX1
-          integer             :: NINPUT,I
-          integer             :: NGDX0,NGDX1,NGDY0,NGDY1,NGDZ0,NGDZ1
-          character*2,dimension(:),allocatable      :: ATLABEL0,ATLABEL1
-          real,dimension(:,:),allocatable           :: ATCOORD0,ATCOORD1
-          real,dimension(3)                         :: ORG0,ORG1
-          real,dimension(:,:,:),allocatable         :: GRID0,GRID1
-
-          print*,'Please specify the number of other 3D XSF files: '
-          read*,NINPUT
-          call
-     &      read_3dxsf(INPUT0,LATT0,ATLABEL0,ATCOORD0,ORG0,BOX0,GRID0)
-          NGDX0 = size(GRID0,dim=1)
-          NGDY0 = size(GRID0,dim=2)
-          NGDZ0 = size(GRID0,dim=3)
-
-          do I = 1,NINPUT
-            print*,'File name: '
-            read*,INPUT1
-            call
-     &        read_3dxsf(INPUT1,LATT1,ATLABEL1,ATCOORD1,ORG1,BOX1,GRID1)
-            NGDX1 = size(GRID1,dim=1)
-            NGDY1 = size(GRID1,dim=2)
-            NGDZ1 = size(GRID1,dim=3)
-            if (NGDX0 /= NGDX1 .or. NGDY0 /= NGDY1 .or. NGDZ0 /= NGDZ1)
-     &      then
-              print*,'Inconsistent dimension detected between ',INPUT0,
-     &         ' and ',INPUT1,'. Exiting.'
-              stop
-            endif
-            GRID0 = GRID0 - GRID1
-          enddo
-          call
-     &      write_3dxsf(OUTPUT,LATT0,ATLABEL0,ATCOORD0,ORG0,BOX0,GRID0)
-        end subroutine option2
-!----
-        subroutine option3(INPUT0,OUT3,OUT1)
-!----     Get difference of multiple 3D grid data and 1D line profile
-          character(len=80),intent(in) :: INPUT0,OUT3,OUT1
-
-          call option2(INPUT0,OUT3)
-          call option1(OUT3,OUT1)
-        end subroutine option3
-!----
-        subroutine option4(INPUT,OUTPUT)
+        subroutine optionA2
 !----     Normalize the integrated 3D grid data
           use io
 
-          character(len=80),intent(in)         :: INPUT,OUTPUT
+          character(len=80)                    :: INPUT,OUTPUT
           real,dimension(3,3)                  :: LATT,BOX
           character*2,dimension(:),allocatable :: ATLABEL
           real,dimension(:,:),allocatable      :: ATCOORD
@@ -120,6 +71,12 @@
           integer                              ::
      &      NGDX,NGDY,NGDZ,I,J,K,NOPT
 
+          print*,'Please specify the name of 3D XSF input: '
+          read*,INPUT
+          print*,'Please specify the name of 3D XSF output: '
+          read*,OUTPUT
+          INPUT = trim(INPUT)
+          OUTPUT = trim(OUTPUT)
           print*,'Please specify your option:'
           print*,'  1. Normalize the integrated value to input value.'
           print*,'  2. Divide the grid data by input value.'
@@ -163,35 +120,147 @@
             end do
           endif
           call write_3dxsf(OUTPUT,LATT,ATLABEL,ATCOORD,ORG,BOX,GRID)
-        end subroutine option4
+          deallocate(ATLABEL,ATCOORD,GRID)
+        end subroutine optionA2
 !----
-        subroutine option5(INPUT1,INPUT2,OUTPUT)
+        subroutine optionB1(INPUT0,OUTPUT)
+!         Get difference of 3D data
+          use io
+          use operation
+
+          character(len=80),intent(in) :: INPUT0,OUTPUT
+          character(len=80)   :: INPUT1
+          real,dimension(3,3) :: LATT0,LATT1,BOX0,BOX1
+          integer             :: NINPUT,I
+          character*2,dimension(:),allocatable      :: ATLABEL0,ATLABEL1
+          real,dimension(:,:),allocatable           :: ATCOORD0,ATCOORD1
+          real,dimension(3)                         :: ORG0,ORG1
+          real,dimension(:,:,:),allocatable         :: GRID0,GRID1
+
+          print*,'Please specify the number of other 3D XSF files: '
+          read*,NINPUT
+          call
+     &      read_3dxsf(INPUT0,LATT0,ATLABEL0,ATCOORD0,ORG0,BOX0,GRID0)
+
+          do I = 1,NINPUT
+            print*,'File name: '
+            read*,INPUT1
+            call
+     &        read_3dxsf(INPUT1,LATT1,ATLABEL1,ATCOORD1,ORG1,BOX1,GRID1)
+            call compare_grid(ORG0,BOX0,GRID0,ORG1,BOX1,GRID1)
+            GRID0 = GRID0 - GRID1
+          end do
+          call
+     &      write_3dxsf(OUTPUT,LATT0,ATLABEL0,ATCOORD0,ORG0,BOX0,GRID0)
+          deallocate(ATLABEL0,ATLABEL1,ATCOORD0,ATCOORD1,GRID0,GRID1)
+        end subroutine optionB1
+!----
+        subroutine optionB2
+!----     Get difference of multiple 3D grid data and 1D line profile
+          character(len=80) :: INPUT0,OUT3,OUT1
+
+          print*,'Please specify the name of main 3D XSF file: '
+          read*,INPUT0
+          print*,'Please specify the name of 3D XSF output: '
+          read*,OUT3
+          print*,'Please specify the name of 1D line profile file: '
+          read*,OUT1
+
+          call optionB1(trim(INPUT0),trim(OUT3))
+          call optionA1(trim(OUT3),trim(OUT1))
+        end subroutine optionB2
+!----
+        subroutine optionB3
 !----     Get correlation of 2 3D xsf data
           use io
+          use operation
 
-          character(len=80),intent(in)         :: INPUT1,INPUT2,OUTPUT
-          real,dimension(3,3)                  :: LATT,BOX
+          character(len=80)                    :: INPUT1,INPUT2,OUTPUT
+          real,dimension(3,3)                  :: LATT,BOX1,BOX2
           character*2,dimension(:),allocatable :: ATLABEL
           real,dimension(:,:),allocatable      :: ATCOORD
-          real,dimension(3)                    :: ORG
+          real,dimension(3)                    :: ORG1,ORG2
           real,dimension(:,:,:),allocatable    :: GRID1,GRID2
-          integer                              ::
-     &      NGDX1,NGDY1,NGDZ1,NGDX2,NGDY2,NGDZ2,I,J,K
+          integer                              :: I,J,K
+
+          print*,'NOTE: This module analysis correlation of 2 xsf data.'
+          print*,'      A txt file for scatter plotting is generated.'
+          print*,'Please specify the 3D XSF file as x axis:'
+          read*,INPUT1
+          print*,'Please specify the 3D XSF file as y axis:'
+          read*,INPUT2
+          print*,'Please specify the 2D plot file name:'
+          read*,OUTPUT
 
           ! Read and compare dimensions of grid data
-          call read_3dxsf(INPUT1,LATT,ATLABEL,ATCOORD,ORG,BOX,GRID1)
-          NGDX1 = size(GRID1,dim=1)
-          NGDY1 = size(GRID1,dim=2)
-          NGDZ1 = size(GRID1,dim=3)
-          call read_3dxsf(INPUT2,LATT,ATLABEL,ATCOORD,ORG,BOX,GRID2)
-          NGDX2 = size(GRID2,dim=1)
-          NGDY2 = size(GRID2,dim=2)
-          NGDZ2 = size(GRID2,dim=3)
-          if (NGDX1/=NGDX2 .or. NGDY1/=NGDY2 .or. NGDZ1/=NGDZ2) then
-            print*,'ERROR: Inconsistent grid detected.'
-            stop
-          end if
+          call read_3dxsf(INPUT1,LATT,ATLABEL,ATCOORD,ORG1,BOX1,GRID1)
+          call read_3dxsf(INPUT2,LATT,ATLABEL,ATCOORD,ORG2,BOX2,GRID2)
+          call compare_grid(ORG1,BOX1,GRID1,ORG2,BOX2,GRID2)
           ! write file
           call write_scatter(OUTPUT,INPUT1,GRID1,INPUT2,GRID2)
-        end subroutine option5
+          deallocate(ATLABEL,ATCOORD,GRID1,GRID2)
+        end subroutine optionB3
+!----
+        subroutine optionB4
+!----     Map isosurfaces of one grid over another.
+          use io
+          use operation
+
+          character(len=80) :: INPUT1,INPUT2,OUTPUT,VRANGE,VTXT,VTMP
+          character         :: C
+          real              :: VMIN,VMAX
+          logical           :: ISABS
+          integer           :: I
+          real,dimension(3,3)                  :: LATT,BOX1,BOX2
+          character*2,dimension(:),allocatable :: ATLABEL
+          real,dimension(:,:),allocatable      :: ATCOORD
+          real,dimension(3)                    :: ORG1,ORG2
+          real,dimension(:,:,:),allocatable    :: GRID1,GRID2
+
+          print*,'Please specify the reference 3D XSF file:'
+          read*,INPUT1
+          print*,'Please specify the mapped 3D XSF file:'
+          read*,INPUT2
+          print*,'Please specify the range of reference data.
+     & Data in mapped grid exceeding this range will be removed'
+          print*,'  (Format: VMIN VMAX. For absolute values, use +-)'
+          read*,VTXT
+          print*,'Please specify the 3D XSF output:'
+          read*,OUTPUT
+
+!         Get values
+          VTXT = trim(VTXT)
+          VTMP = ''
+          do I = 1,len(VTXT)
+            if (VTXT(I:I) == ' ') then
+              if (VTMP(1:2) == '+-') then
+                read(VTMP(3:),'(E14.6)') VMIN
+                ISABS = .true.
+              else
+                read(VTMP,'(E14.6)') VMIN
+                ISABS = .false.
+              end if
+              VTMP = ''
+            else
+              VTMP = VTMP//VTXT(I:I)
+            end if
+          end do
+          if (ISABS) then
+            read(VTMP(3:),'(E14.6)') VMAX
+          else
+            read(VTMP,'(E14.6)') VMAX
+          end if
+
+!         Map the data
+          call read_3dxsf(
+     &      trim(INPUT1),LATT,ATLABEL,ATCOORD,ORG1,BOX1,GRID1)
+          call read_3dxsf(
+     &      trim(INPUT2),LATT,ATLABEL,ATCOORD,ORG2,BOX2,GRID2)
+          call compare_grid(ORG1,BOX1,GRID1,ORG2,BOX2,GRID2)
+          call map_grid(GRID1,VMIN,VMAX,ISABS,GRID2)
+          ! write file
+          call write_3dxsf(
+     &      trim(OUTPUT),LATT,ATLABEL,ATCOORD,ORG2,BOX2,GRID2)
+          deallocate(ATLABEL,ATCOORD,GRID1,GRID2)
+        end subroutine optionB4
       end module option

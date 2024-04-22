@@ -1,4 +1,4 @@
-      program opt3dxsf
+      program xsfkit
 !     Process 3D real space grid data in XCrySDen XSF format for various
 !     applications. Including:
 !     1. Difference among various sets of data, such as differential
@@ -28,63 +28,53 @@
 !     ------------------------------------------------------------------
         use option
 
-        integer           :: OPTNUM
-        character(len=80) :: INPUT,INPUT2,OUTPUT,OUTPUT2
+        character(len=10) :: OPTNUM
+        character(len=80) :: INPUT,OUTPUT
 
         print*,'======================================================='
         print*,'                 XSF-KIT BY SPICA.VIR'
         print*,'NOTE: Geometry unit: Å'
         print*,'      Data grid unit: Commmensurate with input'
         print*,'======================================================='
-        print*,
-     &    '1. Planar-averaged line profile and integration ',
-     &    'of 3D XSF data.'
-        print*,'2. 3D XSF data differences of multiple files.'
-        print*,'3. 3D data difference + line profile and integration.'
-        print*,'4. 3D data normalization.'
-        print*,'5. Correlation between 2 3D grid data.'
+        print*,''
+        print*,'A Single XSF data grid'
+        print*,'  A1 Planar-averaged line profile and its integration.'
+        print*,'  A2 Normalization.'
+        print*,'-------------------------------------------------------'
+        print*,'B Multiple XSF data grids'
+        print*,'  B1 Differences of multiple XSF data grids.'
+        print*,'  B2 Data grid difference + line profile / integration.'
+        print*,'  B3 Correlation between 2 data grids.'
+        print*,'  B4 Map isosurfaces of one grid over another.'
+        print*,''
+        print*,'======================================================='
         print*,'Please enter your option: '
         read*,OPTNUM
+        OPTNUM = trim(OPTNUM)
 
-        if (OPTNUM == 1) then
+        if (OPTNUM == 'A1') then
           print*,'Please specify the name of 3D XSF file: '
           read*,INPUT
           print*,'Please specify the name of 1D line profile file: '
           read*,OUTPUT
-          call option1(INPUT,OUTPUT)
-        else if (OPTNUM == 2) then
+          call optionA1(trim(INPUT),trim(OUTPUT))
+        else if (OPTNUM == 'A2') then
+          call optionA2
+        else if (OPTNUM == 'B1') then
           print*,'Please specify the name of main 3D XSF file: '
           read*,INPUT
           print*,'Please specify the name of 3D XSF output: '
           read*,OUTPUT
-          call option2(INPUT,OUTPUT)
-        else if (OPTNUM == 3) then
-          print*,'Please specify the name of main 3D XSF file: '
-          read*,INPUT
-          print*,'Please specify the name of 3D XSF output: '
-          read*,OUTPUT
-          print*,'Please specify the name of 1D line profile file: '
-          read*,OUTPUT2
-          call option3(INPUT,OUTPUT,OUTPUT2)
-        else if (OPTNUM == 4) then
-          print*,'Please specify the name of 3D XSF input: '
-          read*,INPUT
-          print*,'Please specify the name of 3D XSF output: '
-          read*,OUTPUT
-          call option4(INPUT,OUTPUT)
-        else if (OPTNUM == 5) then
-          print*,'NOTE: This module analysis correlation of 2 xsf data.'
-          print*,'      A txt file for scatter plotting is generated.'
-          print*,'Please specify the 3D XSF input as x axis:'
-          read*,INPUT
-          print*,'Please specify the 3D XSF input as y axis:'
-          read*,INPUT2
-          print*,'Please specify the 2D plot file name:'
-          read*,OUTPUT
-          call option5(INPUT,INPUT2,OUTPUT)
+          call optionB1(trim(INPUT),trim(OUTPUT))
+        else if (OPTNUM == 'B2') then
+          call optionB2
+        else if (OPTNUM == 'B3') then
+          call optionB3
+        else if (OPTNUM == 'B4') then
+          call optionB4
         else
           print*,'Error: Option not supported. Exiting.'
           stop
         endif
         stop
-      end program opt3dxsf
+      end program xsfkit

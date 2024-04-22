@@ -6,8 +6,8 @@
 !        real,parameter    :: A2BR = 1.889726128 disabled
         integer,parameter :: NGDM = 1000
 
-        public  :: planar_avg,shift_1dplot
-        private :: plane_area,line_integ
+        public  :: planar_avg,compare_grid,map_grid
+        private :: shift_1dplot,plane_area,line_integ
 
         contains
         subroutine planar_avg(LATT,ATCOORD,ORG,BOX,GRID,AVGVEC,SHIFT,
@@ -182,6 +182,90 @@
           end do
           return
         end function line_integ
+
+        subroutine compare_grid(ORG1,BOX1,GRID1,ORG2,BOX2,GRID2)
+!         compare the size of grid
+          real,dimension(3),intent(in)                 :: ORG1,ORG2
+          real,dimension(3,3),intent(in)               :: BOX1,BOX2
+          real,dimension(:,:,:),allocatable,intent(in) :: GRID1,GRID2
+          integer           :: NGDX1,NGDX2,NGDY1,NGDY2,NGDZ1,NGDZ2,I,J
+          real,dimension(3)   :: DORG
+          real,dimension(3,3) :: DBOX
+
+          ! Origin
+          DORG = ORG1 - ORG2
+          do I = 1,3
+            if (abs(DORG(I)) > 1E-6) then
+              print*, 'ERROR: Inconsistent data grid origin.'
+              stop
+            end if
+          end do
+          ! Box
+          DBOX = BOX1 - BOX2
+          do I = 1,3
+            do J = 1,3
+              if (abs(DBOX(J,I)) > 1E-6) then
+                print*, 'ERROR: Inconsistent data grid boundary.'
+                stop
+              end if
+            end do
+          end do
+          ! Grid size
+          NGDX1 = size(GRID1,dim=1)
+          NGDY1 = size(GRID1,dim=2)
+          NGDZ1 = size(GRID1,dim=3)
+          NGDX2 = size(GRID2,dim=1)
+          NGDY2 = size(GRID2,dim=2)
+          NGDZ2 = size(GRID2,dim=3)
+          if (NGDX2 /= NGDX1 .or. NGDY2 /= NGDY1 .or. NGDZ2 /= NGDZ1)
+     &    then
+            print*,'Inconsistent grid size'
+            stop
+          end if
+        end subroutine compare_grid
+
+        subroutine map_grid(REFG,VMIN,VMAX,ISABS,MAPG)
+!        Map value region (isosurfaces) of REFG to another grid MAPG
+!        REFG  : NGX*NGY*NGZ data grid for reference
+!        VMIN  : Minimum mapping value in REFG
+!        VMAX  : Maximum mapping value in REFG
+!        ISABS : Whether the absolute value of REFG is used
+!        MAPG  : NGX*NGY*NGZ data grid to be mapped
+          real,dimension(:,:,:),allocatable,intent(in)    :: REFG
+          real,dimension(:,:,:),allocatable,intent(inout) :: MAPG
+          real,dimension(:,:,:),allocatable               :: REFGNEW
+          real,intent(in)                                 :: VMIN,VMAX
+          logical,intent(in)                              :: ISABS
+          integer :: I,J,K,NGX,NGY,NGZ
+          real    :: MMAX,MMIN,MNEW
+
+          NGX = size(REFG,dim=1)
+          NGY = size(REFG,dim=2)
+          NGZ = size(REFG,dim=3)
+          allocate(REFGNEW(NGX,NGY,NGZ))
+          if (ISABS) then
+            REFGNEW = abs(REFG)
+          else
+            REFGNEW = REFG
+          end if
+!         For points mapped out, a value beyond the original data range is needed
+          MMAX = maxval(MAPG)
+          MMIN = minval(MAPG)
+          MNEW = MMIN - (MMAX - MMIN)
+          do K = 1,NGZ
+            do J = 1,NGY
+              do I = 1,NGX
+                if (REFGNEW(I,J,K) >= VMIN .and. REFGNEW(I,J,K) <= VMAX)
+     &          then
+                    continue
+                else
+                    MAPG(I,J,K) = MNEW
+                end if
+              end do
+            end do
+          end do
+          deallocate(REFGNEW)
+        end subroutine map_grid
       end module operation
 
 
