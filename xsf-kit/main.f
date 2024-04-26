@@ -45,7 +45,7 @@
         print*,'  B1 Differences of multiple XSF data grids.'
         print*,'  B2 Data grid difference + line profile / integration.'
         print*,'  B3 Correlation between 2 data grids.'
-        print*,'  B4 Map isosurfaces of one grid over another.'
+        print*,'  B4 Map isosurfaces of one grid over another(In Dev).'
         print*,''
         print*,'======================================================='
         print*,'Please enter your option: '

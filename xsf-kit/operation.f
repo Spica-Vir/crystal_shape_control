@@ -224,20 +224,25 @@
           end if
         end subroutine compare_grid
 
-        subroutine map_grid(REFG,VMIN,VMAX,ISABS,MAPG)
+        subroutine map_grid(REFG,VMIN,VMAX,ISABS,IMIN,IMAX,MAPG)
 !        Map value region (isosurfaces) of REFG to another grid MAPG
 !        REFG  : NGX*NGY*NGZ data grid for reference
 !        VMIN  : Minimum mapping value in REFG
 !        VMAX  : Maximum mapping value in REFG
+!        IMIN  : Minimum isosurface value in MAPG
+!        IMAX  : Maximum isosurface value in MAPG
+!                If IMAX < IMIN, that indicates 2 separate ranges,
+!                minval(MAPG) to IMAX and IMIN to maxval(MAPG)
 !        ISABS : Whether the absolute value of REFG is used
 !        MAPG  : NGX*NGY*NGZ data grid to be mapped
           real,dimension(:,:,:),allocatable,intent(in)    :: REFG
           real,dimension(:,:,:),allocatable,intent(inout) :: MAPG
           real,dimension(:,:,:),allocatable               :: REFGNEW
-          real,intent(in)                                 :: VMIN,VMAX
-          logical,intent(in)                              :: ISABS
-          integer :: I,J,K,NGX,NGY,NGZ
-          real    :: MMAX,MMIN,MNEW
+          real,intent(in)    :: VMIN,VMAX,IMIN,IMAX
+          logical,intent(in) :: ISABS
+          integer            :: I,J,K,NGX,NGY,NGZ
+          logical            :: TWORANGE=.false.
+          real               :: IMIN2,IMAX2
 
           NGX = size(REFG,dim=1)
           NGY = size(REFG,dim=2)
@@ -248,18 +253,34 @@
           else
             REFGNEW = REFG
           end if
-!         For points mapped out, a value beyond the original data range is needed
-          MMAX = maxval(MAPG)
-          MMIN = minval(MAPG)
-          MNEW = MMIN - (MMAX - MMIN)
+          if (IMIN > IMAX) then
+            TWORANGE = .true.
+            IMIN2 = minval(MAPG)
+            IMAX2 = maxval(MAPG)
+          end if
+!         For points mapped out, set to 0
           do K = 1,NGZ
             do J = 1,NGY
               do I = 1,NGX
-                if (REFGNEW(I,J,K) >= VMIN .and. REFGNEW(I,J,K) <= VMAX)
+                if (REFGNEW(I,J,K) <= VMIN .or. REFGNEW(I,J,K) >= VMAX)
      &          then
+                  MAPG(I,J,K) = 0.0
+                  continue
+                end if
+                if (TWORANGE) then
+                  if (MAPG(I,J,K) > IMAX2 .or. MAPG(I,J,K) < IMIN) then
+                    MAPG(I,J,K) = 0.0
                     continue
+                  end if
+                  if (MAPG(I,J,K) > IMAX .or. MAPG(I,J,K) < IMIN2) then
+                    MAPG(I,J,K) = 0.0
+                    continue
+                  end if
                 else
-                    MAPG(I,J,K) = MNEW
+                  if (MAPG(I,J,K) > IMAX .or. MAPG(I,J,K) < IMIN) then
+                    MAPG(I,J,K) = 0.0
+                    continue
+                  end if
                 end if
               end do
             end do

@@ -206,58 +206,89 @@
           use io
           use operation
 
-          character(len=80) :: INPUT1,INPUT2,OUTPUT,VRANGE,VTXT,VTMP
-          character         :: C
-          real              :: VMIN,VMAX
-          logical           :: ISABS
-          integer           :: I
+          character(len=80)    :: INPUT1,INPUT2,OUTPUT
+          character(len=20)    :: VTXT1,VTXT2,IVAL
+          character            :: C
+          real                 :: VMIN,VMAX,VTMP,IMIN,IMAX
+          logical              :: ISABS=.false.
+          integer              :: I,NPM=0
+          integer,dimension(2) :: LOCPM
           real,dimension(3,3)                  :: LATT,BOX1,BOX2
           character*2,dimension(:),allocatable :: ATLABEL
           real,dimension(:,:),allocatable      :: ATCOORD
           real,dimension(3)                    :: ORG1,ORG2
           real,dimension(:,:,:),allocatable    :: GRID1,GRID2
 
-          print*,'Please specify the reference 3D XSF file:'
+          write(0,"(
+     & 'Please specify the reference XSF file for color coding:')")
           read*,INPUT1
-          print*,'Please specify the mapped 3D XSF file:'
+          write(0,"(
+     & 'Please specify the mapped XSF file for isosurface')")
           read*,INPUT2
-          print*,'Please specify the range of reference data.
-     & Data in mapped grid exceeding this range will be removed'
-          print*,'  (Format: VMIN VMAX. For absolute values, use +-)'
-          read*,VTXT
+          write(0, "('Please specify the range of reference data.',
+     & ' Data in mapped grid out of this range will be removed')")
+          print*,'  Format: VMIN VMAX. For absolute values, use +-'
+          read*,VTXT1,VTXT2
+          print*,'Please indicate the isosurface value and direction:'
+          print*,'  Values beyond this range will be removed.'
+          print*,'  Format: <=IVAL, >=IVAL, <=+-IVAL or >=+-IVAL.'
+          read*,IVAL
           print*,'Please specify the 3D XSF output:'
           read*,OUTPUT
 
 !         Get values
-          VTXT = trim(VTXT)
-          VTMP = ''
-          do I = 1,len(VTXT)
-            if (VTXT(I:I) == ' ') then
-              if (VTMP(1:2) == '+-') then
-                read(VTMP(3:),'(E14.6)') VMIN
-                ISABS = .true.
-              else
-                read(VTMP,'(E14.6)') VMIN
-                ISABS = .false.
-              end if
-              VTMP = ''
-            else
-              VTMP = VTMP//VTXT(I:I)
-            end if
-          end do
-          if (ISABS) then
-            read(VTMP(3:),'(E14.6)') VMAX
+          ISABS = .false.
+          if (VTXT1(1:2) == '+-') then
+            ISABS = .true.
+            read(VTXT1(3:),'(E14.6)') VMIN
           else
-            read(VTMP,'(E14.6)') VMAX
+            read(VTXT1,'(E14.6)') VMIN
           end if
-
+          if (VTXT2(1:2) == '+-') then
+            ISABS = .true.
+            read(VTXT2(3:),'(E14.6)') VMAX
+          else
+            read(VTXT2,'(E14.6)') VMAX
+          end if
+          if (VMIN > VMAX) then
+            VTMP = VMIN
+            VMIN = VMAX
+            VMAX = VTMP
+          end if
+          write(0, "(/,1X,'Range: ',E14.6,' to ',E14.6)") VMIN,VMAX
+          if (ISABS) then
+            write(0, "(1X,'Use absolute values...')")
+          else
+            write(0, "(1X,'Do not use absolute values...')")
+          end if
 !         Map the data
           call read_3dxsf(
-     &      trim(INPUT1),LATT,ATLABEL,ATCOORD,ORG1,BOX1,GRID1)
+     &      trim(INPUT1),LATT,ATLABEL,ATCOORD,ORG1,BOX1,GRID1) ! ref grid
           call read_3dxsf(
-     &      trim(INPUT2),LATT,ATLABEL,ATCOORD,ORG2,BOX2,GRID2)
+     &      trim(INPUT2),LATT,ATLABEL,ATCOORD,ORG2,BOX2,GRID2) ! isosurface grid
           call compare_grid(ORG1,BOX1,GRID1,ORG2,BOX2,GRID2)
-          call map_grid(GRID1,VMIN,VMAX,ISABS,GRID2)
+
+          if (IVAL(1:2) == '<=') then
+            if (IVAL(3:4) == '+-') then
+              read(IVAL(5:),'(E14.6)') IMAX
+              IMIN = -IMAX
+            else
+              read(IVAL(3:),'(E14.6)') IMAX
+              IMIN = minval(GRID2)
+            end if
+          else if (IVAL(1:2) == '>=') then
+              if (IVAL(3:4) == '+-') then
+                read(IVAL(5:),'(E14.6)') IMIN ! 2 separate ranges. Let map_grid to get it
+                IMAX = -IMIN
+              else
+                read(IVAL(3:),'(E14.6)') IMIN
+                IMAX = maxval(GRID2)
+              end if
+          else
+            print*,'ERROR: Unknown isosurface value range.'
+          end if
+
+          call map_grid(GRID1,VMIN,VMAX,ISABS,IMIN,IMAX,GRID2)
           ! write file
           call write_3dxsf(
      &      trim(OUTPUT),LATT,ATLABEL,ATCOORD,ORG2,BOX2,GRID2)

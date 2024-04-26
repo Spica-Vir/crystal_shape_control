@@ -130,6 +130,7 @@
           real,dimension(:,:,:),intent(in)         :: GRID
           integer                                  :: I,J,K
 
+          write(0,"(1X,'Writting into file ',A, '...')") trim(XSFOUT)
           NAT = size(ATLABEL,dim=1)
           NGDX = size(GRID,dim=1)
           NGDY = size(GRID,dim=2)
