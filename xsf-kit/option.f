@@ -37,7 +37,7 @@
      &(Unit: fractional unit of data grid): '
           print*,"  Use 'no' for no shift."
           read*,SHIFTC
-          if (SHIFTC == 'no') then
+          if (trim(SHIFTC) == 'no') then
             SHIFT= 0.0
           else
             read(SHIFTC,'(f10.6)') SHIFT
@@ -75,8 +75,6 @@
           read*,INPUT
           print*,'Please specify the name of 3D XSF output: '
           read*,OUTPUT
-          INPUT = trim(INPUT)
-          OUTPUT = trim(OUTPUT)
           print*,'Please specify your option:'
           print*,'  1. Normalize the integrated value to input value.'
           print*,'  2. Divide the grid data by input value.'
@@ -166,8 +164,8 @@
           print*,'Please specify the name of 1D line profile file: '
           read*,OUT1
 
-          call optionB1(trim(INPUT0),trim(OUT3))
-          call optionA1(trim(OUT3),trim(OUT1))
+          call optionB1(INPUT0,OUT3)
+          call optionA1(OUT3,OUT1)
         end subroutine optionB2
 !----
         subroutine optionB3
@@ -262,10 +260,8 @@
             write(0, "(1X,'Do not use absolute values...')")
           end if
 !         Map the data
-          call read_3dxsf(
-     &      trim(INPUT1),LATT,ATLABEL,ATCOORD,ORG1,BOX1,GRID1) ! ref grid
-          call read_3dxsf(
-     &      trim(INPUT2),LATT,ATLABEL,ATCOORD,ORG2,BOX2,GRID2) ! isosurface grid
+          call read_3dxsf(INPUT1,LATT,ATLABEL,ATCOORD,ORG1,BOX1,GRID1) ! ref grid
+          call read_3dxsf(INPUT2,LATT,ATLABEL,ATCOORD,ORG2,BOX2,GRID2) ! isosurface grid
           call compare_grid(ORG1,BOX1,GRID1,ORG2,BOX2,GRID2)
 
           if (IVAL(1:2) == '<=') then
@@ -290,8 +286,7 @@
 
           call map_grid(GRID1,VMIN,VMAX,ISABS,IMIN,IMAX,GRID2)
           ! write file
-          call write_3dxsf(
-     &      trim(OUTPUT),LATT,ATLABEL,ATCOORD,ORG2,BOX2,GRID2)
+          call write_3dxsf(OUTPUT,LATT,ATLABEL,ATCOORD,ORG2,BOX2,GRID2)
           deallocate(ATLABEL,ATCOORD,GRID1,GRID2)
         end subroutine optionB4
       end module option

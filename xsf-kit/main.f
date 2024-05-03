@@ -57,7 +57,7 @@
           read*,INPUT
           print*,'Please specify the name of 1D line profile file: '
           read*,OUTPUT
-          call optionA1(trim(INPUT),trim(OUTPUT))
+          call optionA1(INPUT,OUTPUT)
         else if (OPTNUM == 'A2') then
           call optionA2
         else if (OPTNUM == 'B1') then
@@ -65,7 +65,7 @@
           read*,INPUT
           print*,'Please specify the name of 3D XSF output: '
           read*,OUTPUT
-          call optionB1(trim(INPUT),trim(OUTPUT))
+          call optionB1(INPUT,OUTPUT)
         else if (OPTNUM == 'B2') then
           call optionB2
         else if (OPTNUM == 'B3') then

@@ -164,6 +164,9 @@
               end do
             end do
           end do
+          if (mod(NGD,5) /= 0) then
+            write(21,'(A)') ''
+          end if
           write(21,'(A)') 'END_DATAGRID_3D'
           write(21,'(A,/,/)') 'END_BLOCK_DATAGRID_3D'
 
