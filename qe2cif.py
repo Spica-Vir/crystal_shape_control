@@ -72,7 +72,7 @@ def read_qe_output(qe_file):
     atom_spec = []
     atom_cord = []
     for l in data[atom_bg_line: atom_ed_line]:
-        atom_spec.append(re.findall(r'[A-Z]{1}[a-z,A-Z]{0}', l)[0])
+        atom_spec.append(re.findall(r'[A-Z]{1}[a-z,A-Z]{0,1}', l)[0])
         atom_cord.append(re.findall(r'[0-9,\-]+\.[0-9]{7,}', l))
     atom_cord = np.array(atom_cord, dtype=float)
     if coord_type == 'alat':
